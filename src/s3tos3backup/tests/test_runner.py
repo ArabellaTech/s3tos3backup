@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, absolute_import
 import os
+import sys
 
 from mock import patch
 from moto import mock_s3
@@ -7,6 +8,12 @@ from moto import mock_s3
 from s3tos3backup.tests.compat import unittest
 from s3tos3backup.runner import main
 from s3tos3backup.backup import run_backup
+
+
+def exception_code(cm):
+    if sys.version_info < (2, 7):
+        return cm.exception
+    return cm.exception.code
 
 
 class TestRunner(unittest.TestCase):
@@ -19,23 +26,23 @@ class TestRunner(unittest.TestCase):
     def test_configure(self):
         with self.assertRaises(SystemExit) as cm:
             main(['--configure'])
-        self.assertEqual(cm.exception.code, 0)
+        self.assertEqual(exception_code(cm), 0)
 
     def test_version(self):
         with self.assertRaises(SystemExit) as cm:
             main(['--version'])
-        self.assertEqual(cm.exception.code, 0)
+        self.assertEqual(exception_code(cm), 0)
 
     def test_wrong_config(self):
         with self.assertRaises(SystemExit) as cm:
             main(['--config='])
-        self.assertEqual(cm.exception.code, 1)
+        self.assertEqual(exception_code(cm), 1)
 
     @patch('s3tos3backup.runner.run_backup')
     def test_no_bucket(self, MockClass):
         with self.assertRaises(SystemExit) as cm:
             main([])
-        self.assertEqual(cm.exception.code, 1)
+        self.assertEqual(exception_code(cm), 1)
         assert not MockClass.called
 
     @patch('s3tos3backup.runner.run_backup')
