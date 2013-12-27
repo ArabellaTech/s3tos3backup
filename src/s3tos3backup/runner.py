@@ -14,8 +14,9 @@ import os
 import ConfigParser
 
 from s3tos3backup import PkgInfo
+from s3tos3backup.backup import run_backup
 
-from optparse import OptionParser, IndentedHelpFormatter
+from argparse import ArgumentParser
 
 default_verbosity = logging.ERROR
 
@@ -85,37 +86,37 @@ def output(message):
     sys.stdout.flush()
 
 
-def main():
-    optparser = OptionParser(formatter=IndentedHelpFormatter())
+def main(args=None):
+    optparser = ArgumentParser(description='s3tos3backup is a tool for managing backups for Amazon S3 storage.')
     preferred_encoding = locale.getpreferredencoding() or "UTF-8"
     optparser.set_defaults(encoding=preferred_encoding)
     config_file = os.path.join(os.getenv("HOME"), ".s3tos3backup")
     optparser.set_defaults(config=config_file)
     optparser.set_defaults(verbosity=default_verbosity)
 
-    optparser.add_option("-c", "--config", dest="config", metavar="FILE", help="Config file name. Defaults to %default")
-    optparser.add_option("--access_key", dest="access_key", help="AWS Access Key")
-    optparser.add_option("--secret_key", dest="secret_key", help="AWS Secret Key")
-    optparser.add_option("-b", "--bucket", dest="bucket_name", help="Bucket name")
-    optparser.add_option("-o", "--remove-older-days", dest="remove_older_days",
-                         help="Remove backups older than days")
-    optparser.add_option("-v", "--verbose", dest="verbosity", action="store_const", const=logging.INFO,
-                         help="Enable verbose output.")
-    optparser.add_option("-d", "--debug", dest="verbosity", action="store_const", const=logging.DEBUG,
-                         help="Enable debug output.")
-    optparser.add_option("--remove-only", dest="backup", action="store_false", default=True,
-                         help="Remove only old backups. Do not do a backup")
-    optparser.add_option("--backup-only", dest="remove", action="store_false", default=True,
-                         help="Do a backup. Do not remove only old backups")
-    optparser.add_option("--configure", dest="configure", action="store_true",
-                         help="Save configuration and exit.")
-    optparser.add_option("--version", dest="show_version", action="store_true",
-                         help="Show s3tos3backup version (%s) and exit." % (PkgInfo.version))
+    optparser.add_argument("-c", "--config", dest="config", metavar="FILE",
+                           help="Config file name. Defaults to %s" % config_file)
+    optparser.add_argument("--access_key", dest="access_key", help="AWS Access Key")
+    optparser.add_argument("--secret_key", dest="secret_key", help="AWS Secret Key")
+    optparser.add_argument("-b", "--bucket", dest="bucket_name", help="Bucket name")
+    optparser.add_argument("-o", "--remove-older-days", dest="remove_older_days",
+                           help="Remove backups older than days")
+    optparser.add_argument("-v", "--verbose", dest="verbosity", action="store_const", const=logging.INFO,
+                           help="Enable verbose output.")
+    optparser.add_argument("-d", "--debug", dest="verbosity", action="store_const", const=logging.DEBUG,
+                           help="Enable debug output.")
+    optparser.add_argument("--remove-only", dest="backup", action="store_false", default=True,
+                           help="Remove only old backups. Do not do a backup")
+    optparser.add_argument("--backup-only", dest="remove", action="store_false", default=True,
+                           help="Do a backup. Do not remove only old backups")
+    optparser.add_argument("--configure", dest="configure", action="store_true",
+                           help="Save configuration and exit.")
+    optparser.add_argument("--version", dest="show_version", action="store_true",
+                           help="Show s3tos3backup version (%s) and exit." % (PkgInfo.version))
 
-    optparser.set_description('s3tos3backup is a tool for managing backups for Amazon S3 storage.')
     optparser.epilog = ("\nFor more information see the project homepage:\n%s\n" % PkgInfo.url)
 
-    (options, args) = optparser.parse_args()
+    options = optparser.parse_args(args)
 
     logging.basicConfig(level=options.verbosity,
                         format='%(levelname)s: %(message)s',
@@ -141,22 +142,25 @@ def main():
     logging.root.setLevel(options.verbosity)
 
     config = ConfigParser.ConfigParser()
-    if not config.read(options.config):
-        raise EnvironmentError("You need to configure s3tos3backup, 's3tos3backup --configure'")
+    with_config = False
+    if os.path.exists(options.config):
+        with_config = True
+        if not config.read(options.config):
+            raise EnvironmentError("You need to configure s3tos3backup, 's3tos3backup --configure'")
 
-    bucket_name = options.bucket_name or config.get('default', 'bucket_name')
+    bucket_name = options.bucket_name or (with_config and config.get('default', 'bucket_name'))
+
     if not bucket_name:
         logging.error(u"Bucket name is required. Please use --bucket option.")
         sys.exit(1)
 
-    aws_key = options.access_key or config.get('default', 'access_key')
-    aws_secret_key = options.secret_key or config.get('default', 'secret_key')
-    remove_older_days = options.remove_older_days or config.get('default', 'remove_older_days') or 7
+    aws_key = options.access_key or (with_config and config.get('default', 'access_key'))
+    aws_secret_key = options.secret_key or (with_config and config.get('default', 'secret_key'))
+    remove_older_days = options.remove_older_days or (with_config and config.get('default', 'remove_older_days')) or 7
 
     try:
-        from .backup import run_backup
-        run_backup(options.backup, options.remove, aws_key, aws_secret_key, remove_older_days)
-    except ImportError, e:
+        run_backup(bucket_name, options.backup, options.remove, aws_key, aws_secret_key, remove_older_days)
+    except Exception, e:
         report_exception(e)
         sys.exit(1)
 

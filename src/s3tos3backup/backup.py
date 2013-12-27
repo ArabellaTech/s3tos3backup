@@ -1,14 +1,15 @@
 from datetime import date
+from boto import connect_s3
 
 from .copy import copy_bucket
 from .remove import remove_old_buckets
 
 
-def run_backup(backup, remove, aws_key, aws_secret_key, remove_older_days):
-    src = 'caseify-remi'
+def run_backup(src, backup, remove, aws_key=None, aws_secret_key=None, remove_older_days=7):
+    connection = connect_s3(aws_key, aws_secret_key)
     if backup:
         today = date.today()
         dest = src + '-backup-' + str(today)
-        copy_bucket(aws_key, aws_secret_key, src, dest)
+        copy_bucket(connection, src, dest)
     if remove:
-        remove_old_buckets(aws_key, aws_secret_key, src, remove_older_days)
+        remove_old_buckets(connection, src, remove_older_days)

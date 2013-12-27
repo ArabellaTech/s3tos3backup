@@ -6,13 +6,12 @@ log = logging.getLogger('s3tos3backup.worker')
 
 
 class BaseWorker(threading.Thread):
-    def __init__(self, queue, thread_id, aws_key, aws_secret_key):
+    def __init__(self, queue, thread_id, connection):
         threading.Thread.__init__(self)
         self.queue = queue
         self.done_count = 0
         self.thread_id = thread_id
-        self.aws_key = aws_key
-        self.aws_secret_key = aws_secret_key
+        self.connection = connection
 
     def run(self):
         pass

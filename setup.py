@@ -11,7 +11,7 @@ for dist in requirements.readlines():
     except DistributionNotFound:
         required_to_install.append(dist)
 
-extra_kwargs = {'tests_require': ['mock>1.0']}
+extra_kwargs = {'tests_require': ['mock>1.0', 'moto>=0.2.11']}
 if sys.version_info < (2, 7):
     extra_kwargs['tests_require'].append('unittest2')
 
@@ -33,7 +33,7 @@ setup(
             's3tos3backup = s3tos3backup.runner:main',
         ],
     },
-    # test_suite="test_project.runtests.runtests",
+    test_suite='s3tos3backup.tests.collector',
     include_package_data=True,
     classifiers=[
         'License :: OSI Approved :: MIT License',
