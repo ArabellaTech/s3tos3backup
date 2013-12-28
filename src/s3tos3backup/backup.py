@@ -6,7 +6,11 @@ from .remove import remove_old_buckets
 
 
 def run_backup(src, backup, remove, aws_key=None, aws_secret_key=None, remove_older_days=7):
-    connection = connect_s3(aws_key, aws_secret_key)
+    if aws_key and aws_secret_key:
+        connection = connect_s3(aws_key, aws_secret_key)
+    else:
+        # IAM role connection
+        connection = connect_s3()
     if backup:
         today = date.today()
         dest = src + '-backup-' + str(today)
