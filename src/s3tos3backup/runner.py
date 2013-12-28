@@ -20,7 +20,7 @@ from argparse import ArgumentParser
 
 default_verbosity = logging.ERROR
 
-CONFIG_TEMPLATE = """[default]
+CONFIG_TEMPLATE = """[main]
 access_key = %(access_key)s
 secret_key = %(secret_key)s
 bucket_name = %(bucket_name)s
@@ -96,8 +96,8 @@ def main(args=None):
 
     optparser.add_argument("-c", "--config", dest="config", metavar="FILE",
                            help="Config file name. Defaults to %s" % config_file)
-    optparser.add_argument("--access_key", dest="access_key", help="AWS Access Key")
-    optparser.add_argument("--secret_key", dest="secret_key", help="AWS Secret Key")
+    optparser.add_argument("--access_key", dest="aws_access_key", help="AWS Access Key")
+    optparser.add_argument("--secret_key", dest="aws_secret_key", help="AWS Secret Key")
     optparser.add_argument("-b", "--bucket", dest="bucket_name", help="Bucket name")
     optparser.add_argument("-o", "--remove-older-days", dest="remove_older_days",
                            help="Remove backups older than days")
@@ -128,8 +128,8 @@ def main(args=None):
 
     if options.configure:
         with open(config_file, 'w') as f:
-            f.write(CONFIG_TEMPLATE % dict(access_key=options.access_key,
-                                           secret_key=options.secret_key,
+            f.write(CONFIG_TEMPLATE % dict(access_key=options.aws_access_key,
+                                           secret_key=options.aws_secret_key,
                                            bucket_name=options.bucket_name,
                                            remove_older_days=options.remove_older_days))
         output(u"Config saved to: %s" % config_file)
@@ -141,22 +141,29 @@ def main(args=None):
 
     logging.root.setLevel(options.verbosity)
 
-    config = ConfigParser.ConfigParser()
-    with_config = False
+    config = ConfigParser.SafeConfigParser({'bucket_name': options.bucket_name,
+                                            'aws_key': options.aws_access_key,
+                                            'aws_secret_key': options.aws_secret_key,
+                                            'remove_older_days': options.remove_older_days or '7'})
     if os.path.exists(options.config):
-        with_config = True
         if not config.read(options.config):
             raise EnvironmentError("You need to configure s3tos3backup, 's3tos3backup --configure'")
 
-    bucket_name = options.bucket_name or (with_config and config.get('default', 'bucket_name'))
+    if not config.has_section('main'):
+        config.add_section('main')
+
+    bucket_name = config.get('main', 'bucket_name')
+    try:
+        aws_key = config.get('main', 'access_key')
+        aws_secret_key = config.get('main', 'secret_key')
+    except ConfigParser.NoOptionError:
+        aws_key = None
+        aws_secret_key = None
+    remove_older_days = config.getint('main', 'remove_older_days')
 
     if not bucket_name:
         logging.error(u"Bucket name is required. Please use --bucket option.")
         sys.exit(1)
-
-    aws_key = options.access_key or (with_config and config.get('default', 'access_key'))
-    aws_secret_key = options.secret_key or (with_config and config.get('default', 'secret_key'))
-    remove_older_days = options.remove_older_days or (with_config and config.get('default', 'remove_older_days')) or 7
 
     try:
         run_backup(bucket_name, options.backup, options.remove, aws_key, aws_secret_key, remove_older_days)
