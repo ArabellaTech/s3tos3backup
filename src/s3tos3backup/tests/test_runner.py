@@ -3,11 +3,9 @@ import os
 import sys
 
 from mock import patch
-from moto import mock_s3
 
 from s3tos3backup.tests.compat import unittest
 from s3tos3backup.runner import main
-from s3tos3backup.backup import run_backup
 
 
 def exception_code(cm):
@@ -50,10 +48,8 @@ class TestRunner(unittest.TestCase):
         main(['-b src'])
         assert MockClass.called
 
-    @patch('s3tos3backup.backup.copy_bucket')
-    @patch('s3tos3backup.backup.remove_old_buckets')
-    @mock_s3
-    def test_backup_all(self, MockClass1, MockClass2):
-        run_backup('src', True, True)
-        assert MockClass1.called
-        assert MockClass2.called
+    @patch('s3tos3backup.runner.run_backup', side_effect=KeyError('foo'))
+    def test_report(self, MockClass):
+        with self.assertRaises(SystemExit) as cm:
+            main(['-b src'])
+        self.assertEqual(exception_code(cm), 1)

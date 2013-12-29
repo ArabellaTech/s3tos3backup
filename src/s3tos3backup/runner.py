@@ -146,8 +146,7 @@ def main(args=None):
                                             'aws_secret_key': options.aws_secret_key,
                                             'remove_older_days': options.remove_older_days or '7'})
     if os.path.exists(options.config):
-        if not config.read(options.config):
-            raise EnvironmentError("You need to configure s3tos3backup, 's3tos3backup --configure'")
+        config.read(options.config)
 
     if not config.has_section('main'):
         config.add_section('main')
