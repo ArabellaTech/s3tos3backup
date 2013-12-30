@@ -87,7 +87,7 @@ def output(message):
 
 
 def main(args=None):
-    optparser = ArgumentParser(description='s3tos3backup is a tool for managing backups for Amazon S3 storage.')
+    optparser = ArgumentParser(description='s3tos3backup is a tool for managing backups for Amazon S3 storage with IAM role support.')
     preferred_encoding = locale.getpreferredencoding() or "UTF-8"
     optparser.set_defaults(encoding=preferred_encoding)
     config_file = os.path.join(os.getenv("HOME"), ".s3tos3backup")
@@ -102,17 +102,17 @@ def main(args=None):
     optparser.add_argument("-o", "--remove-older-days", dest="remove_older_days",
                            help="Remove backups older than days")
     optparser.add_argument("-v", "--verbose", dest="verbosity", action="store_const", const=logging.INFO,
-                           help="Enable verbose output.")
+                           help="Enable verbose output")
     optparser.add_argument("-d", "--debug", dest="verbosity", action="store_const", const=logging.DEBUG,
-                           help="Enable debug output.")
+                           help="Enable debug output")
     optparser.add_argument("--remove-only", dest="backup", action="store_false", default=True,
                            help="Remove only old backups. Do not do a backup")
     optparser.add_argument("--backup-only", dest="remove", action="store_false", default=True,
                            help="Do a backup. Do not remove only old backups")
     optparser.add_argument("--configure", dest="configure", action="store_true",
-                           help="Save configuration and exit.")
+                           help="Save configuration and exit")
     optparser.add_argument("--version", dest="show_version", action="store_true",
-                           help="Show s3tos3backup version (%s) and exit." % (PkgInfo.version))
+                           help="Show s3tos3backup version (%s) and exit" % (PkgInfo.version))
 
     optparser.epilog = ("\nFor more information see the project homepage:\n%s\n" % PkgInfo.url)
 
