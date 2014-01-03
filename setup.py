@@ -17,7 +17,7 @@ if sys.version_info < (2, 7):
 
 setup(
     name='s3tos3backup',
-    version='0.1',
+    version='1.0',
     url="https://github.com/YD-Technology/s3tos3backup",
     author='YD Technology',
     author_email="team@ydtechnology.com",
