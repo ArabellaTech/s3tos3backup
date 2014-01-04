@@ -68,3 +68,9 @@ Running PEP8 checker
 ::
 
     pep8 --config=pep8.rc src/s3tos3backup
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/YD-Technology/s3tos3backup/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
+
