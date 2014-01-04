@@ -7,6 +7,10 @@ S3 To S3 Backup
 
 .. image:: https://coveralls.io/repos/YD-Technology/s3tos3backup/badge.png?branch=master
    :target: https://coveralls.io/r/YD-Technology/s3tos3backup/
+   
+.. image:: https://d2weczhvl823v0.cloudfront.net/YD-Technology/s3tos3backup/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
 
 s3tos3backup is a tool for managing backups for Amazon S3 storage with IAM role support.
 
